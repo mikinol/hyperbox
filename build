@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cc -O3 -s -Wall -static -nostdlib -fno-builtin -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
