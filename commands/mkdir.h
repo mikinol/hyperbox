@@ -1,6 +1,5 @@
 #include "../lib.h"
 #include "../nolibc/nolibc.h"
-#include <stdlib.h>
 
 static inline void do_recursive_mkdir(int argc, char **argv) {
   for (int i = 2; i < argc; i++) {
