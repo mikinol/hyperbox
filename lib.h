@@ -6,6 +6,7 @@
 // Buffers sizes
 #define CAT_BUFFER_SIZE 16384
 #define CAT_BUFFER_KEEP 512
+#define WC_BUFFER_SIZE 8192
 #define STDERR_WRITEBUFFER_SIZE 4096
 
 // Print

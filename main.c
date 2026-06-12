@@ -6,6 +6,7 @@
 #include "./commands/cat.h"
 #include "./commands/echo.h"
 #include "./commands/mkdir.h"
+#include "./commands/wc.h"
 
 int main(int argc, char **argv) {
   if (argc < 1)
@@ -18,6 +19,8 @@ int main(int argc, char **argv) {
     do_mkdir(argc, argv);
   } else if (strcmp(cmd, "echo") == 0) {
     do_echo(argc, argv);
+  } else if (strcmp(cmd, "wc") == 0) {
+    do_wc(argc, argv);
   }
 
   WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");

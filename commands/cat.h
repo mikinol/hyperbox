@@ -39,7 +39,7 @@ static inline void read_files_to_stdout(int argc, char **argv) {
       errprint_literal("Couldn't open file ");
       errprint_string(argv[i]);
       errprint_literal(" with status ");
-      errprint_long(fd);
+      errprint_long(errno);
       errprint_flush();
       exit(1);
     }
