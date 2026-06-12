@@ -18,77 +18,57 @@ static inline void read_files_to_stdout(int argc, char **argv) {
       exit(1);
     }
 
-    struct statx stx;
-    int status = statx(fd, NULL, AT_EMPTY_PATH, STATX_SIZE, &stx);
-    if (status != 0) {
-      errprint_literal("Couldn't statx file ");
-      errprint_string(argv[i]);
-      errprint_literal(" with status ");
-      errprint_long(status);
-      errprint_flush();
-      exit(1);
-    }
-    if (!(stx.stx_mask & STATX_SIZE)) {
-      errprint_literal("Incorrect statx mask ");
-      errprint_long(stx.stx_mask);
-      errprint_literal(" with file ");
-      errprint_string(argv[i]);
-      errprint_flush();
-      exit(1);
-    }
-    if (stx.stx_size == 0) {
-      long ret;
-      while ((ret = read(fd, CAT_BUFFER + CAT_BUFFER_POS, CAT_BUFFER_SIZE - CAT_BUFFER_POS)) > 0) {
-        CAT_BUFFER_POS += ret;
+    while (true) {
+      ssize_t ret = syscall(SYS_sendfile, STDOUT_FILENO, fd, NULL, INT_MAX);
 
-        if (CAT_BUFFER_POS >= (CAT_BUFFER_SIZE - CAT_BUFFER_KEEP)) {
-          write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-          CAT_BUFFER_POS = 0;
-        }
+      if (ret > 0) {
+        continue;
+      }
+
+      if (ret == 0) {
+        break;
       }
 
       if (ret < 0) {
-        errprint_literal("Couldn't read file ");
-        errprint_string(argv[i]);
-        errprint_literal(" with status ");
-        errprint_long(ret);
-        errprint_flush();
-        exit(1);
-      }
+        if (errno == EINVAL) {
+          while ((ret = read(fd, CAT_BUFFER + CAT_BUFFER_POS, CAT_BUFFER_SIZE - CAT_BUFFER_POS)) > 0) {
+            CAT_BUFFER_POS += ret;
 
-      goto finish;
-    }
+            if (CAT_BUFFER_POS >= (CAT_BUFFER_SIZE - CAT_BUFFER_KEEP)) {
+              write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
+              CAT_BUFFER_POS = 0;
+            }
+          }
 
-    ssize_t readed = 0;
-    while (readed != stx.stx_size) {
-      if (CAT_BUFFER_POS > 0) {
-        write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-        CAT_BUFFER_POS = 0;
-      }
+          if (ret < 0) {
+            errprint_literal("Couldn't read file ");
+            errprint_string(argv[i]);
+            errprint_literal(" with status ");
+            errprint_long(errno);
+            errprint_flush();
+            exit(1);
+          }
 
-      ssize_t retuned = syscall(SYS_sendfile, STDOUT_FILENO, fd, NULL, stx.stx_size - readed);
-      if (retuned == 0) {
-        break;
-      } else if (retuned < 0) {
+          if (CAT_BUFFER_POS > 0) {
+            write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
+            CAT_BUFFER_POS = 0;
+          }
+          goto finish;
+        }
+
         errprint_literal("Couldn't sendfile ");
         errprint_string(argv[i]);
         errprint_literal(" with status ");
-        errprint_long(retuned);
+        errprint_long(errno);
         errprint_flush();
         exit(1);
       }
-
-      readed += retuned;
     }
 
   finish:
     i++;
-    if (i == argc) {
-      if (CAT_BUFFER_POS > 0)
-        write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-
+    if (i == argc)
       exit(0);
-    }
 
     close(fd);
   }
