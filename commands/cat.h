@@ -5,6 +5,32 @@
 static char CAT_BUFFER[CAT_BUFFER_SIZE];
 static unsigned long CAT_BUFFER_POS = 0;
 
+static inline void read_file_with_read_write(int fd, char *filename) {
+  ssize_t ret;
+  while ((ret = read(fd, CAT_BUFFER + CAT_BUFFER_POS, CAT_BUFFER_SIZE - CAT_BUFFER_POS)) > 0) {
+    CAT_BUFFER_POS += ret;
+
+    if (CAT_BUFFER_POS >= (CAT_BUFFER_SIZE - CAT_BUFFER_KEEP)) {
+      write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
+      CAT_BUFFER_POS = 0;
+    }
+  }
+
+  if (ret < 0) {
+    errprint_literal("Couldn't read file ");
+    errprint_string(filename);
+    errprint_literal(" with status ");
+    errprint_long(errno);
+    errprint_flush();
+    exit(1);
+  }
+
+  if (CAT_BUFFER_POS > 0) {
+    write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
+    CAT_BUFFER_POS = 0;
+  }
+}
+
 static inline void read_files_to_stdout(int argc, char **argv) {
   int i = 1;
   while (true) {
@@ -16,6 +42,11 @@ static inline void read_files_to_stdout(int argc, char **argv) {
       errprint_long(fd);
       errprint_flush();
       exit(1);
+    }
+
+    if (strncmp(argv[i], "/proc/", 6) == 0 || strncmp(argv[i], "/sys/", 5) == 0 || strncmp(argv[i], "/dev/", 5) == 0) {
+      read_file_with_read_write(fd, argv[i]);
+      goto finish;
     }
 
     while (true) {
@@ -31,28 +62,7 @@ static inline void read_files_to_stdout(int argc, char **argv) {
 
       if (ret < 0) {
         if (errno == EINVAL) {
-          while ((ret = read(fd, CAT_BUFFER + CAT_BUFFER_POS, CAT_BUFFER_SIZE - CAT_BUFFER_POS)) > 0) {
-            CAT_BUFFER_POS += ret;
-
-            if (CAT_BUFFER_POS >= (CAT_BUFFER_SIZE - CAT_BUFFER_KEEP)) {
-              write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-              CAT_BUFFER_POS = 0;
-            }
-          }
-
-          if (ret < 0) {
-            errprint_literal("Couldn't read file ");
-            errprint_string(argv[i]);
-            errprint_literal(" with status ");
-            errprint_long(errno);
-            errprint_flush();
-            exit(1);
-          }
-
-          if (CAT_BUFFER_POS > 0) {
-            write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-            CAT_BUFFER_POS = 0;
-          }
+          read_file_with_read_write(fd, argv[i]);
           goto finish;
         }
 

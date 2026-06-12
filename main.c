@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "./commands/cat.h"
+#include "./commands/mkdir.h"
 
 int main(int argc, char **argv) {
   if (argc < 1)
@@ -12,7 +13,10 @@ int main(int argc, char **argv) {
   const char *cmd = get_basename(argv[0]);
   if (strcmp(cmd, "cat") == 0) {
     do_cat(argc, argv);
+  } else if (strcmp(cmd, "mkdir") == 0) {
+    do_mkdir(argc, argv);
   }
 
+  WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");
   exit(1);
 }
