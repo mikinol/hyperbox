@@ -87,13 +87,7 @@ static inline long print_fd_to_end(io_buffer_t *b, int fd) {
   return ret;
 }
 
-static inline void print_string(io_buffer_t *b, const char *X) {
-  if (__builtin_constant_p(X)) {
-    print_array(b, X, sizeof(X) - 1);
-  } else {
-    print_array(b, X, strlen(X));
-  }
-}
+static inline void print_string(io_buffer_t *b, const char *X) { print_array(b, X, strlen(X)); }
 static inline void print_long(io_buffer_t *b, long num) { print_string(b, itoa(num)); }
 static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
   (void)flag;
@@ -142,15 +136,24 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
     print_long(b, errno);
 }
 
+#define is_static_string(X)                                                                                                                \
+  (__builtin_constant_p(X) &&                                                                                                              \
+   (__builtin_types_compatible_p(__typeof__(X), const char[]) || __builtin_types_compatible_p(__typeof__(X), char[])))
+
 #define print_any(b, X)                                                                                                                    \
-  _Generic((X),                                                                                                                            \
-      flush_flag_t: print_flush_flag,                                                                                                      \
-      errno_flag_t: print_errno_formatted,                                                                                                 \
-      endl_flag_t: print_endl_flag,                                                                                                        \
-      const char *: print_string,                                                                                                          \
-      char *: print_string,                                                                                                                \
-      long: print_long,                                                                                                                    \
-      int: print_long)(b, X)
+  do {                                                                                                                                     \
+    __builtin_choose_expr(is_static_string(X),                                                                                             \
+                          print_array((b), (const char *)__builtin_choose_expr(is_static_string(X), (X), ""),                              \
+                                      sizeof(__builtin_choose_expr(is_static_string(X), (X), "")) - 1),                                    \
+                          _Generic((X),                                                                                                    \
+                              flush_flag_t: print_flush_flag,                                                                              \
+                              errno_flag_t: print_errno_formatted,                                                                         \
+                              endl_flag_t: print_endl_flag,                                                                                \
+                              const char *: print_string,                                                                                  \
+                              char *: print_string,                                                                                        \
+                              long: print_long,                                                                                            \
+                              int: print_long)((b), (X)));                                                                                 \
+  } while (0)
 
 #define print1(b, X1) print_any(b, X1)
 #define print2(b, X1, X2)                                                                                                                  \
@@ -175,7 +178,10 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
 #define GET_MACRO(_1, _2, _3, _4, _5, NAME, ...) NAME
 #define print(b, ...) GET_MACRO(__VA_ARGS__, print5, print4, print3, print2, print1)(b, __VA_ARGS__)
 
-[[deprecated]] static inline void errprint_array(const char *arr, unsigned long length) { print_array(&STDERR_IO, arr, length); }
+[[deprecated]]
+static inline void errprint_array(const char *arr, unsigned long length) {
+  print_array(&STDERR_IO, arr, length);
+}
 [[deprecated]] static inline void errprint_string(const char *str) { errprint_array(str, strlen(str)); }
 [[deprecated]] static inline void errprint_long(long num) { errprint_string(itoa(num)); }
 [[deprecated]] static inline void errprint_flush() { print_flush(&STDERR_IO); }
