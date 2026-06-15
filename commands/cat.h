@@ -2,45 +2,19 @@
 #include "../nolibc/nolibc.h"
 #include <sys/syscall.h>
 
-static char CAT_BUFFER[CAT_BUFFER_SIZE];
-static unsigned long CAT_BUFFER_POS = 0;
-
 static inline void read_file_with_read_write(int fd, char *filename) {
-  ssize_t ret;
-  while ((ret = read(fd, CAT_BUFFER + CAT_BUFFER_POS, CAT_BUFFER_SIZE - CAT_BUFFER_POS)) > 0) {
-    CAT_BUFFER_POS += ret;
-
-    if (CAT_BUFFER_POS >= (CAT_BUFFER_SIZE - CAT_BUFFER_KEEP)) {
-      write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-      CAT_BUFFER_POS = 0;
-    }
-  }
-
+  long ret = print_fd_to_end(&STDOUT_IO, fd);
   if (ret < 0) {
-    errprint_literal("Couldn't read file ");
-    errprint_string(filename);
-    errprint_literal(" with status ");
-    errprint_long(errno);
-    errprint_flush();
+    print(&STDERR_IO, "Cannot read file ", filename, ": ", _errno, _endl);
     exit(1);
-  }
-
-  if (CAT_BUFFER_POS > 0) {
-    write(STDOUT_FILENO, CAT_BUFFER, CAT_BUFFER_POS);
-    CAT_BUFFER_POS = 0;
   }
 }
 
 static inline void read_files_to_stdout(int argc, char **argv) {
-  int i = 1;
-  while (true) {
+  for (int i = 1; i < argc; i++) {
     int fd = open(argv[i], O_RDONLY);
     if (fd < 0) {
-      errprint_literal("Couldn't open file ");
-      errprint_string(argv[i]);
-      errprint_literal(" with status ");
-      errprint_long(errno);
-      errprint_flush();
+      print(&STDERR_IO, "Cannot open file ", argv[i], ": ", _errno, _endl);
       exit(1);
     }
 
@@ -49,6 +23,7 @@ static inline void read_files_to_stdout(int argc, char **argv) {
       goto finish;
     }
 
+    print_flush(&STDOUT_IO);
     while (true) {
       ssize_t ret = syscall(SYS_sendfile, STDOUT_FILENO, fd, NULL, INT_MAX);
 
@@ -66,41 +41,29 @@ static inline void read_files_to_stdout(int argc, char **argv) {
           goto finish;
         }
 
-        errprint_literal("Couldn't sendfile ");
-        errprint_string(argv[i]);
-        errprint_literal(" with status ");
-        errprint_long(errno);
-        errprint_flush();
+        print(&STDERR_IO, "Couldn't sendfile ", argv[i], ": ", _errno, _endl);
         exit(1);
       }
     }
 
   finish:
-    i++;
-    if (i == argc)
-      exit(0);
+    if (i == argc - 1)
+      return;
 
     close(fd);
   }
 }
 
-static inline void read_from_stdin() {
-  long ret;
-  while ((ret = read(STDIN_FILENO, CAT_BUFFER, sizeof(CAT_BUFFER))) > 0) {
-    write(STDOUT_FILENO, CAT_BUFFER, ret);
-  }
-
-  if (ret < 0) {
-    errprint_literal("Couldn't sendfile data from stdin to stdout with status ");
-    errprint_long(ret);
-    errprint_flush();
-    exit(1);
-  }
-}
-
 static inline void do_cat(int argc, char **argv) {
   if (argc == 1) {
-    read_from_stdin();
+    long ret = print_fd_to_end(&STDOUT_IO, STDIN_FILENO);
+
+    if (ret < 0) {
+      print(&STDERR_IO, "Cannot copy data from stdin to stdout: ", _errno, _endl);
+      exit(1);
+    }
+
+    print_flush(&STDOUT_IO);
   } else {
     read_files_to_stdout(argc, argv);
   }

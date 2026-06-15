@@ -12,26 +12,18 @@ static inline void do_echo(int argc, char **argv) {
     exit(0);
   }
 
-  char *start_pointer = argv[1 + is_not_do_newline];
-  size_t current_reading = 2 + is_not_do_newline;
-  size_t i = 0;
-  while (true) {
-    if (start_pointer[i] == '\0') {
-      if (current_reading < argc) {
-        start_pointer[i] = ' ';
-        current_reading++;
-      } else if (is_not_do_newline) {
-        write(STDOUT_FILENO, start_pointer, i);
-        exit(0);
-      } else {
-        start_pointer[i] = '\n';
-        write(STDOUT_FILENO, start_pointer, i + 1);
-        exit(0);
-      }
-    }
-
-    i++;
+  size_t start_i = 2 + is_not_do_newline;
+  for (size_t i = start_i; i < argc - 1; i++) {
+    *(argv[i + 1] - 1) = ' ';
   }
 
+  size_t last_argv_strlen = strlen(argv[argc - 1]);
+  if (is_not_do_newline) {
+    write(STDOUT_FILENO, argv[start_i], argv[argc - 1] + last_argv_strlen - argv[start_i]);
+    exit(0);
+  }
+
+  argv[argc - 1][last_argv_strlen] = '\n';
+  write(STDOUT_FILENO, argv[start_i], argv[argc - 1] + last_argv_strlen + 1 - argv[start_i]);
   exit(0);
 }

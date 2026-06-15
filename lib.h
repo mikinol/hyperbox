@@ -4,33 +4,181 @@
 #define _HYPERBOX_LIB_H
 
 // Buffers sizes
-#define CAT_BUFFER_SIZE 16384
-#define CAT_BUFFER_KEEP 512
 #define COPY_BUFFER_SIZE 8192
 #define WC_BUFFER_SIZE 8192
+#define STDOUT_WRITEBUFFER_SIZE 16384
 #define STDERR_WRITEBUFFER_SIZE 4096
 
 // Print
-static char STDERR_WRITEBUFFER[STDERR_WRITEBUFFER_SIZE];
-static unsigned long STDERR_WRITEBUFFER_POS;
+typedef struct {
+  char *buf;
+  size_t size;
+  size_t pos;
+  int fd;
+} io_buffer_t;
 
-static inline void errprint_array(const char *arr, unsigned long length) {
-  while (STDERR_WRITEBUFFER_POS + STDERR_WRITEBUFFER_POS > STDERR_WRITEBUFFER_SIZE) {
-    unsigned long tocopy = STDERR_WRITEBUFFER_SIZE - STDERR_WRITEBUFFER_POS;
-    memcpy(STDERR_WRITEBUFFER, arr, tocopy);
-    write(STDERR_FILENO, STDERR_WRITEBUFFER, STDERR_WRITEBUFFER_SIZE);
-    STDERR_WRITEBUFFER_POS = 0;
+static char STDERR_WRITEBUFFER[STDERR_WRITEBUFFER_SIZE];
+static io_buffer_t STDERR_IO = {STDERR_WRITEBUFFER, STDERR_WRITEBUFFER_SIZE, 0, STDERR_FILENO};
+static char STDOUT_WRITEBUFFER[STDOUT_WRITEBUFFER_SIZE];
+static io_buffer_t STDOUT_IO = {STDOUT_WRITEBUFFER, STDOUT_WRITEBUFFER_SIZE, 0, STDOUT_FILENO};
+
+typedef struct {
+  char dummy;
+} flush_flag_t;
+typedef struct {
+  char dummy;
+} errno_flag_t;
+typedef struct {
+  char dummy;
+} endl_flag_t;
+static const flush_flag_t _flush = {0};
+static const errno_flag_t _errno = {0};
+static const endl_flag_t _endl = {0};
+
+static inline void print_flush(io_buffer_t *b) {
+  if (b->pos == 0)
+    return;
+  write(b->fd, b->buf, b->pos);
+  b->pos = 0;
+}
+static inline void print_flush_flag(io_buffer_t *b, flush_flag_t flag) {
+  (void)flag;
+  if (b->pos == 0)
+    return;
+  write(b->fd, b->buf, b->pos);
+  b->pos = 0;
+}
+static inline void print_array(io_buffer_t *b, const char *arr, unsigned long length) {
+  if (b->pos + length > b->size && b->fd == -2) {
+    print_array(&STDERR_IO, "Cannot write to buffer: target buffer is full", 46);
+    return;
   }
 
-  memcpy(STDERR_WRITEBUFFER + STDERR_WRITEBUFFER_POS, arr, length);
-  STDERR_WRITEBUFFER_POS += length;
+  if (b->pos == b->size)
+    write(b->fd, b->buf, b->size);
+
+  while (b->pos + length > b->size) {
+    unsigned long tocopy = b->size - b->pos;
+    memcpy(b->buf, arr, tocopy);
+    write(b->fd, b->buf, b->size);
+    b->pos = 0;
+  }
+
+  memcpy(b->buf + b->pos, arr, length);
+  b->pos += length;
 }
-static inline void errprint_string(const char *str) { errprint_array(str, strlen(str)); }
-static inline void errprint_long(long num) { errprint_string(itoa(num)); }
-static inline void errprint_flush() {
-  write(STDERR_FILENO, STDERR_WRITEBUFFER, STDERR_WRITEBUFFER_POS);
-  STDERR_WRITEBUFFER_POS = 0;
+static inline void print_endl_flag(io_buffer_t *b, endl_flag_t flag) {
+  (void)flag;
+  print_array(b, "\n", 1);
+  write(b->fd, b->buf, b->pos);
+  b->pos = 0;
 }
+static inline long print_fd_to_end(io_buffer_t *b, int fd) {
+  long ret;
+  while ((ret = read(fd, b->buf + b->pos, b->size - b->pos)) > 0) {
+    b->pos += ret;
+
+    if (b->pos == b->size) {
+      write(b->fd, b->buf, b->pos);
+      b->pos = 0;
+    }
+  }
+
+  return ret;
+}
+
+static inline void print_string(io_buffer_t *b, const char *X) {
+  if (__builtin_constant_p(X)) {
+    print_array(b, X, sizeof(X) - 1);
+  } else {
+    print_array(b, X, strlen(X));
+  }
+}
+static inline void print_long(io_buffer_t *b, long num) { print_string(b, itoa(num)); }
+static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
+  (void)flag;
+  bool unknown = false;
+  const char *msg;
+
+  switch (errno) {
+  case EACCES:
+    msg = "Permission denied";
+    break;
+  case ENOENT:
+    msg = "No such file or directory";
+    break;
+  case EEXIST:
+    msg = "File exists";
+    break;
+  case EINTR:
+    msg = "Interrupted system call";
+    break;
+  case EIO:
+    msg = "I/O error";
+    break;
+  case EISDIR:
+    msg = "Is a directory";
+    break;
+  case ENOTDIR:
+    msg = "Not a directory";
+    break;
+  case ENOMEM:
+    msg = "Out of memory";
+    break;
+  case EBUSY:
+    msg = "Device or resource busy";
+    break;
+  case EPERM:
+    msg = "Operation not permitted";
+    break;
+  default:
+    msg = "Unknown errno = ";
+    unknown = true;
+    break;
+  }
+
+  print_string(b, msg);
+  if (unknown)
+    print_long(b, errno);
+}
+
+#define print_any(b, X)                                                                                                                    \
+  _Generic((X),                                                                                                                            \
+      flush_flag_t: print_flush_flag,                                                                                                      \
+      errno_flag_t: print_errno_formatted,                                                                                                 \
+      endl_flag_t: print_endl_flag,                                                                                                        \
+      const char *: print_string,                                                                                                          \
+      char *: print_string,                                                                                                                \
+      long: print_long,                                                                                                                    \
+      int: print_long)(b, X)
+
+#define print1(b, X1) print_any(b, X1)
+#define print2(b, X1, X2)                                                                                                                  \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2)
+#define print3(b, X1, X2, X3)                                                                                                              \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2);                                                                                                                        \
+  print_any(b, X3)
+#define print4(b, X1, X2, X3, X4)                                                                                                          \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2);                                                                                                                        \
+  print_any(b, X3);                                                                                                                        \
+  print_any(b, X4)
+#define print5(b, X1, X2, X3, X4, X5)                                                                                                      \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2);                                                                                                                        \
+  print_any(b, X3);                                                                                                                        \
+  print_any(b, X4);                                                                                                                        \
+  print_any(b, X5)
+
+#define GET_MACRO(_1, _2, _3, _4, _5, NAME, ...) NAME
+#define print(b, ...) GET_MACRO(__VA_ARGS__, print5, print4, print3, print2, print1)(b, __VA_ARGS__)
+
+[[deprecated]] static inline void errprint_array(const char *arr, unsigned long length) { print_array(&STDERR_IO, arr, length); }
+[[deprecated]] static inline void errprint_string(const char *str) { errprint_array(str, strlen(str)); }
+[[deprecated]] static inline void errprint_long(long num) { errprint_string(itoa(num)); }
+[[deprecated]] static inline void errprint_flush() { print_flush(&STDERR_IO); }
 
 #define errprint_literal(str_literal) errprint_array("" str_literal, sizeof(str_literal) - 1)
 

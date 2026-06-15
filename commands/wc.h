@@ -12,9 +12,7 @@ static inline long count_bytes_in_any_fd(int fd) {
   }
 
   if (ret < 0) {
-    errprint_literal("Couldn't read fd with status ");
-    errprint_long(errno);
-    errprint_flush();
+    print(&STDERR_IO, "Cannot read fd: ", _errno, _endl);
     exit(1);
   }
 
@@ -34,9 +32,7 @@ static inline long count_newlines_in_fd(int fd) {
   }
 
   if (ret < 0) {
-    errprint_literal("Couldn't read fd with status ");
-    errprint_long(errno);
-    errprint_flush();
+    print(&STDERR_IO, "Cannot read fd: ", _errno, _endl);
     exit(1);
   }
 
@@ -63,11 +59,7 @@ static inline void do_wc(int argc, char **argv) {
       while (true) {
         int fd = open(argv[i], O_RDONLY);
         if (fd < 0) {
-          errprint_literal("Couldn't open file ");
-          errprint_string(argv[i]);
-          errprint_literal(" with status ");
-          errprint_long(fd);
-          errprint_flush();
+          print(&STDERR_IO, "Cannot open file \'", argv[i], "\': ", _errno, _endl);
           exit(1);
         }
 
@@ -92,11 +84,7 @@ static inline void do_wc(int argc, char **argv) {
     struct statx stx;
     int ret = statx(AT_FDCWD, argv[i], AT_STATX_DONT_SYNC, STATX_TYPE | STATX_SIZE, &stx);
     if (ret < 0) {
-      errprint_literal("Couldn't stat file ");
-      errprint_string(argv[i]);
-      errprint_literal(" with status ");
-      errprint_long(errno);
-      errprint_flush();
+      print(&STDERR_IO, "Cannot stat file \'", argv[i], "\': ", _errno, _endl);
       exit(1);
     }
 
@@ -108,11 +96,7 @@ static inline void do_wc(int argc, char **argv) {
 
     int fd = open(argv[i], O_RDONLY);
     if (fd < 0) {
-      errprint_literal("Couldn't open file ");
-      errprint_string(argv[i]);
-      errprint_literal(" with status ");
-      errprint_long(errno);
-      errprint_flush();
+      print(&STDERR_IO, "Cannot open file \'", argv[i], "\': ", _errno, _endl);
       exit(1);
     }
 
