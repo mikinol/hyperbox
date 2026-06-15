@@ -5,6 +5,8 @@ stdenv.mkDerivation {
 
   src = ./.;
 
+  hardeningDisable = [ "stackprotector" ];
+
   buildPhase = ''
     ${clang}/bin/clang -O3 -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer main.c -o hyperbox
   '';
