@@ -6,6 +6,7 @@
 // Buffers sizes
 #define CAT_BUFFER_SIZE 16384
 #define CAT_BUFFER_KEEP 512
+#define COPY_BUFFER_SIZE 8192
 #define WC_BUFFER_SIZE 8192
 #define STDERR_WRITEBUFFER_SIZE 4096
 
@@ -13,7 +14,7 @@
 static char STDERR_WRITEBUFFER[STDERR_WRITEBUFFER_SIZE];
 static unsigned long STDERR_WRITEBUFFER_POS;
 
-static inline void errprint_array(char *arr, unsigned long length) {
+static inline void errprint_array(const char *arr, unsigned long length) {
   while (STDERR_WRITEBUFFER_POS + STDERR_WRITEBUFFER_POS > STDERR_WRITEBUFFER_SIZE) {
     unsigned long tocopy = STDERR_WRITEBUFFER_SIZE - STDERR_WRITEBUFFER_POS;
     memcpy(STDERR_WRITEBUFFER, arr, tocopy);
@@ -24,7 +25,7 @@ static inline void errprint_array(char *arr, unsigned long length) {
   memcpy(STDERR_WRITEBUFFER + STDERR_WRITEBUFFER_POS, arr, length);
   STDERR_WRITEBUFFER_POS += length;
 }
-static inline void errprint_string(char *str) { errprint_array(str, strlen(str)); }
+static inline void errprint_string(const char *str) { errprint_array(str, strlen(str)); }
 static inline void errprint_long(long num) { errprint_string(itoa(num)); }
 static inline void errprint_flush() {
   write(STDERR_FILENO, STDERR_WRITEBUFFER, STDERR_WRITEBUFFER_POS);
