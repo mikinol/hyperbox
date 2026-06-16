@@ -2,6 +2,7 @@
 
 #include "./commands/cat.h"
 #include "./commands/cp.h"
+#include "./commands/discord_snowflake_parse.h"
 #include "./commands/echo.h"
 #include "./commands/mkdir.h"
 #include "./commands/password_gen.h"
@@ -24,6 +25,8 @@ int main(int argc, char **argv) {
     do_cp(argc, argv);
   } else if (strcmp(cmd, "password_gen") == 0) {
     do_password_gen(argc, argv);
+  } else if (strcmp(cmd, "discord_snowflake_parse") == 0) {
+    do_discord_snowflake_parse(argc, argv);
   }
 
   WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");

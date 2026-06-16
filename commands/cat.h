@@ -38,7 +38,6 @@ static inline void read_files_to_stdout(int argc, char **argv) {
           read_file_with_read_write(fd, argv[i]);
           goto finish;
         }
-
         print(&STDERR_IO, "Couldn't sendfile ", argv[i], ": ", _errno, _endl);
         exit(1);
       }

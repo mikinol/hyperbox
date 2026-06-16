@@ -168,7 +168,9 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
                               char *: print_string,                                                                                        \
                               char: print_char,                                                                                            \
                               long: print_long,                                                                                            \
-                              int: print_long)((b), (X)));                                                                                 \
+                              int: print_long,                                                                                             \
+                              uint16_t: print_long,                                                                                        \
+                              uint8_t: print_long)((b), (X)));                                                                             \
   } while (0)
 
 #define print1(b, X1) print_any(b, X1)
@@ -190,9 +192,33 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
   print_any(b, X3);                                                                                                                        \
   print_any(b, X4);                                                                                                                        \
   print_any(b, X5)
+#define print6(b, X1, X2, X3, X4, X5, X6)                                                                                                  \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2);                                                                                                                        \
+  print_any(b, X3);                                                                                                                        \
+  print_any(b, X4);                                                                                                                        \
+  print_any(b, X5);                                                                                                                        \
+  print_any(b, X6);
+#define print7(b, X1, X2, X3, X4, X5, X6, X7)                                                                                              \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2);                                                                                                                        \
+  print_any(b, X3);                                                                                                                        \
+  print_any(b, X4);                                                                                                                        \
+  print_any(b, X5);                                                                                                                        \
+  print_any(b, X6);                                                                                                                        \
+  print_any(b, X7);
+#define print8(b, X1, X2, X3, X4, X5, X6, X7, X8)                                                                                          \
+  print_any(b, X1);                                                                                                                        \
+  print_any(b, X2);                                                                                                                        \
+  print_any(b, X3);                                                                                                                        \
+  print_any(b, X4);                                                                                                                        \
+  print_any(b, X5);                                                                                                                        \
+  print_any(b, X6);                                                                                                                        \
+  print_any(b, X7);                                                                                                                        \
+  print_any(b, X8);
 
-#define GET_MACRO(_1, _2, _3, _4, _5, NAME, ...) NAME
-#define print(b, ...) GET_MACRO(__VA_ARGS__, print5, print4, print3, print2, print1)(b, __VA_ARGS__)
+#define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, NAME, ...) NAME
+#define print(b, ...) GET_MACRO(__VA_ARGS__, print8, print7, print6, print5, print4, print3, print2, print1)(b, __VA_ARGS__)
 
 [[deprecated]]
 static inline void errprint_array(const char *arr, unsigned long length) {
