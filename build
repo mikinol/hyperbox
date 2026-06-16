@@ -1,3 +1,8 @@
 #!/bin/sh
 
-cc -O3 -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+if [ -n "$TERMUX_VERSION" ]; then
+  cc -O3 -s -Wall -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+else
+  cc -O3 -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+fi
+

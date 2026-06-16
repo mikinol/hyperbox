@@ -81,7 +81,7 @@ static inline void do_wc(int argc, char **argv) {
   bool is_skip_fd;
   while (true) {
     struct statx stx;
-    int ret = statx(AT_FDCWD, argv[i], AT_STATX_DONT_SYNC, STATX_TYPE | STATX_SIZE, &stx);
+    int ret = syscall(__NR_statx, AT_FDCWD, argv[i], AT_STATX_DONT_SYNC, STATX_TYPE | STATX_SIZE, &stx);
     if (ret < 0) {
       print(&STDERR_IO, "Cannot stat file \'", argv[i], "\': ", _errno, _endl);
       exit(1);
