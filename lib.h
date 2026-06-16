@@ -1,4 +1,14 @@
+#ifdef __ANDROID__
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#else
 #include "nolibc/nolibc.h"
+#endif
+
+#include <sys/syscall.h>
 
 #ifndef _HYPERBOX_LIB_H
 #define _HYPERBOX_LIB_H
@@ -8,6 +18,7 @@
 #define WC_BUFFER_SIZE 8192
 #define STDOUT_WRITEBUFFER_SIZE 16384
 #define STDERR_WRITEBUFFER_SIZE 4096
+#define STDIN_READBUFFER_SIZE 16384
 
 // Print
 typedef struct {
@@ -21,6 +32,9 @@ static char STDERR_WRITEBUFFER[STDERR_WRITEBUFFER_SIZE];
 static io_buffer_t STDERR_IO = {STDERR_WRITEBUFFER, STDERR_WRITEBUFFER_SIZE, 0, STDERR_FILENO};
 static char STDOUT_WRITEBUFFER[STDOUT_WRITEBUFFER_SIZE];
 static io_buffer_t STDOUT_IO = {STDOUT_WRITEBUFFER, STDOUT_WRITEBUFFER_SIZE, 0, STDOUT_FILENO};
+
+static char STDIN_READBUFFER[STDIN_READBUFFER_SIZE];
+static io_buffer_t STDIN_IO = {STDIN_READBUFFER, STDIN_READBUFFER_SIZE, 0, -2};
 
 typedef struct {
   char dummy;
@@ -88,6 +102,7 @@ static inline long print_fd_to_end(io_buffer_t *b, int fd) {
 }
 
 static inline void print_string(io_buffer_t *b, const char *X) { print_array(b, X, strlen(X)); }
+static inline void print_char(io_buffer_t *b, char X) { print_array(b, &X, 1); }
 static inline void print_long(io_buffer_t *b, long num) { print_string(b, itoa(num)); }
 static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
   (void)flag;
@@ -151,6 +166,7 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
                               endl_flag_t: print_endl_flag,                                                                                \
                               const char *: print_string,                                                                                  \
                               char *: print_string,                                                                                        \
+                              char: print_char,                                                                                            \
                               long: print_long,                                                                                            \
                               int: print_long)((b), (X)));                                                                                 \
   } while (0)

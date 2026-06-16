@@ -1,6 +1,4 @@
 #include "../lib.h"
-#include "../nolibc/nolibc.h"
-#include <sys/syscall.h>
 
 static char COPY_BUFFER[COPY_BUFFER_SIZE];
 static io_buffer_t COPY_IO = {COPY_BUFFER, COPY_BUFFER_SIZE, 0, -2};

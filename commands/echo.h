@@ -1,5 +1,4 @@
 #include "../lib.h"
-#include "../nolibc/nolibc.h"
 
 static inline void do_echo(int argc, char **argv) {
   if (argc == 1) {

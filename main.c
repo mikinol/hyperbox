@@ -1,12 +1,10 @@
-#include "nolibc/nolibc.h"
-#include <sys/syscall.h>
-
 #include "lib.h"
 
 #include "./commands/cat.h"
 #include "./commands/cp.h"
 #include "./commands/echo.h"
 #include "./commands/mkdir.h"
+#include "./commands/password_gen.h"
 #include "./commands/wc.h"
 
 int main(int argc, char **argv) {
@@ -24,6 +22,8 @@ int main(int argc, char **argv) {
     do_wc(argc, argv);
   } else if (strcmp(cmd, "cp") == 0) {
     do_cp(argc, argv);
+  } else if (strcmp(cmd, "password_gen") == 0) {
+    do_password_gen(argc, argv);
   }
 
   WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");

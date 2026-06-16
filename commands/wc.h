@@ -1,5 +1,4 @@
 #include "../lib.h"
-#include "../nolibc/nolibc.h"
 
 static char WC_BUFFER[WC_BUFFER_SIZE];
 

@@ -1,6 +1,4 @@
 #include "../lib.h"
-#include "../nolibc/nolibc.h"
-#include <sys/syscall.h>
 
 static inline void read_file_with_read_write(int fd, char *filename) {
   long ret = print_fd_to_end(&STDOUT_IO, fd);
