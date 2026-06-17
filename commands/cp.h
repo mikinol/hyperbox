@@ -1,7 +1,6 @@
 #include "../lib.h"
 
-static char COPY_BUFFER[COPY_BUFFER_SIZE];
-static io_buffer_t COPY_IO = {COPY_BUFFER, COPY_BUFFER_SIZE, 0, -2};
+#define COPY_IO STDIN_IO
 
 static inline void read_file_with_read_write_to_file(int fd1, int fd2) {
   ssize_t ret;

@@ -1,12 +1,10 @@
 #include "../lib.h"
 
-static char WC_BUFFER[WC_BUFFER_SIZE];
-
 static inline long count_bytes_in_any_fd(int fd) {
   long readed = 0;
 
   long ret = 0;
-  while ((ret = read(fd, WC_BUFFER, WC_BUFFER_SIZE)) > 0) {
+  while ((ret = read(fd, STDIN_IO.buf, STDIN_IO.size)) > 0) {
     readed += ret;
   }
 
@@ -22,9 +20,9 @@ static inline long count_newlines_in_fd(int fd) {
   long newlines = 0;
 
   long ret = 0;
-  while ((ret = read(fd, WC_BUFFER, WC_BUFFER_SIZE)) > 0) {
+  while ((ret = read(fd, STDIN_IO.buf, STDIN_IO.size)) > 0) {
     for (int i = 0; i < ret; i++) {
-      if (WC_BUFFER[i] == '\n') {
+      if (STDIN_IO.buf[i] == '\n') {
         newlines++;
       }
     }
