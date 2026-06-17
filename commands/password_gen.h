@@ -134,7 +134,7 @@ static int64_t recalc_bufsize(double success_percent, double needbytes) {
   return truncated + (truncated < result);
 }
 
-int do_password_gen(int argc, char **argv) {
+[[noreturn]] void do_password_gen(int argc, char **argv) {
   if (argc < 3) {
     help();
   }
@@ -159,7 +159,7 @@ int do_password_gen(int argc, char **argv) {
 
   if (pool_size == 0) {
     WRITE_LITERAL(STDERR_FILENO, "Error: dictionary size = 0\n");
-    return 1;
+    exit(1);
   }
 
   const bool is_four = pool_size <= 16;

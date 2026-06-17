@@ -1,6 +1,6 @@
 #include "../lib.h"
 
-static inline void do_echo(int argc, char **argv) {
+[[noreturn]] static inline void do_echo(int argc, char **argv) {
   if (argc == 1) {
     WRITE_LITERAL(STDOUT_FILENO, "\n");
     exit(0);

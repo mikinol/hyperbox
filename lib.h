@@ -9,6 +9,9 @@
 
 #include <sys/syscall.h>
 
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+
 // Buffers sizes
 #define STDOUT_WRITEBUFFER_SIZE 16384
 #define STDERR_WRITEBUFFER_SIZE 4096
@@ -216,6 +219,8 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
 
 // Utils
 #define WRITE_LITERAL(fd, str_literal) write(fd, "" str_literal, sizeof(str_literal) - 1)
+
+#define STR_TO_UINT64(str) (*(const uint64_t *)(str "\0\0\0\0\0\0\0\0"))
 
 static inline const char *get_basename(const char *path) {
   const char *base = path;

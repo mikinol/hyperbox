@@ -21,5 +21,6 @@ stdenv.mkDerivation {
     ln -s hyperbox $out/bin/mkdir
     ln -s hyperbox $out/bin/wc
     ln -s hyperbox $out/bin/cp
+    ln -s hyperbox $out/bin/tee
   '';
 }

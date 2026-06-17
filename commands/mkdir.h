@@ -33,7 +33,7 @@ static inline void do_recursive_mkdir(char *path) {
   }
 }
 
-static inline void do_mkdir(int argc, char **argv) {
+[[noreturn]] static inline void do_mkdir(int argc, char **argv) {
   if (argc == 1) {
     WRITE_LITERAL(STDERR_FILENO, "Usage: mkdir <directory...>\n"
                                  "   or: mkdir -p <directory...>\n");

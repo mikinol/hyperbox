@@ -51,7 +51,7 @@ static inline void read_files_to_stdout(int argc, char **argv) {
   }
 }
 
-static inline void do_cat(int argc, char **argv) {
+[[noreturn]] static inline void do_cat(int argc, char **argv) {
   if (argc == 1) {
     long ret = print_fd_to_end(&STDOUT_IO, STDIN_FILENO);
 

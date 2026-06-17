@@ -6,29 +6,49 @@
 #include "./commands/echo.h"
 #include "./commands/mkdir.h"
 #include "./commands/password_gen.h"
+#include "./commands/tee.h"
 #include "./commands/wc.h"
 
-int main(int argc, char **argv) {
-  if (argc < 1)
-    exit(1);
+[[noreturn]] int main(int argc, char **argv) {
+  if (unlikely(argc < 1))
+    goto incorrect;
 
   const char *cmd = get_basename(argv[0]);
-  if (strcmp(cmd, "cat") == 0) {
-    do_cat(argc, argv);
-  } else if (strcmp(cmd, "mkdir") == 0) {
-    do_mkdir(argc, argv);
-  } else if (strcmp(cmd, "echo") == 0) {
-    do_echo(argc, argv);
-  } else if (strcmp(cmd, "wc") == 0) {
-    do_wc(argc, argv);
-  } else if (strcmp(cmd, "cp") == 0) {
-    do_cp(argc, argv);
-  } else if (strcmp(cmd, "password_gen") == 0) {
-    do_password_gen(argc, argv);
-  } else if (strcmp(cmd, "discord_snowflake_parse") == 0) {
-    do_discord_snowflake_parse(argc, argv);
+  unsigned long len = strlen(cmd);
+
+  typedef void (*worker_fn)(int, char **);
+  worker_fn func = NULL;
+
+  if (len < 8) {
+    uint64_t cmd_v = 0;
+    memcpy(&cmd_v, cmd, len);
+
+    if (cmd_v == STR_TO_UINT64("cat")) {
+      func = do_cat;
+    } else if (cmd_v == STR_TO_UINT64("mkdir")) {
+      func = do_mkdir;
+    } else if (cmd_v == STR_TO_UINT64("echo")) {
+      func = do_echo;
+    } else if (cmd_v == STR_TO_UINT64("wc")) {
+      func = do_wc;
+    } else if (cmd_v == STR_TO_UINT64("tee")) {
+      func = do_tee;
+    } else if (cmd_v == STR_TO_UINT64("cp")) {
+      func = do_cp;
+    }
+  } else {
+    if (strcmp(cmd, "password_gen") == 0) {
+      func = do_password_gen;
+    } else if (strcmp(cmd, "discord_snowflake_parse") == 0) {
+      func = do_discord_snowflake_parse;
+    }
   }
 
+  if (likely(func)) {
+    func(argc, argv);
+  }
+
+incorrect:
   WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");
   exit(1);
 }

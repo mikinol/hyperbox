@@ -72,7 +72,7 @@ char *itoa_padded(int value, int width) {
   return str;
 }
 
-void do_discord_snowflake_parse(int argc, char *argv[]) {
+[[noreturn]] void do_discord_snowflake_parse(int argc, char *argv[]) {
   if (argc < 2) {
     print(&STDERR_IO, "Using: ", argv[0], " <snowflake_id>", _endl);
     exit(1);
