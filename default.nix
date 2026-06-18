@@ -1,20 +1,25 @@
-{ stdenv, clang }:
+{
+  stdenv,
+  clang,
+}:
 stdenv.mkDerivation {
   pname = "hyperbox";
   version = "1.0";
 
   src = ./.;
 
-  hardeningDisable = [ "stackprotector" ];
+  hardeningDisable = ["stackprotector"];
 
-  buildPhase = ''
-    ${clang}/bin/clang -O3 -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer main.c -o hyperbox
+  buildPhase = let
+    cpu = stdenv.hostPlatform.gcc.arch or "x86-64";
+  in ''
+    ${clang}/bin/clang -march=${cpu} -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -fassociative-math -fomit-frame-pointer main.c -o hyperbox
   '';
 
   installPhase = ''
     mkdir -p $out/bin
     cp hyperbox $out/bin/hyperbox
-    
+
     ln -s hyperbox $out/bin/password_gen
     ln -s hyperbox $out/bin/cat
     ln -s hyperbox $out/bin/echo
