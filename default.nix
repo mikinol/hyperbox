@@ -20,6 +20,8 @@ stdenv.mkDerivation {
     mkdir -p $out/bin
     cp hyperbox $out/bin/hyperbox
 
+    ln -s hyperbox $out/bin/discord_snowflake_parse
+    ln -s hyperbox $out/bin/terminal_gameoflife
     ln -s hyperbox $out/bin/password_gen
     ln -s hyperbox $out/bin/cat
     ln -s hyperbox $out/bin/echo

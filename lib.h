@@ -13,7 +13,7 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 // Buffers sizes
-#define STDOUT_WRITEBUFFER_SIZE 16384
+#define STDOUT_WRITEBUFFER_SIZE 32768
 #define STDERR_WRITEBUFFER_SIZE 4096
 #define STDIN_READBUFFER_SIZE 16384
 
@@ -65,8 +65,10 @@ static inline void print_array(io_buffer_t *b, const char *arr, unsigned long le
     return;
   }
 
-  if (b->pos == b->size)
+  if (b->pos == b->size) {
     write(b->fd, b->buf, b->size);
+    b->pos = 0;
+  }
 
   while (b->pos + length > b->size) {
     unsigned long tocopy = b->size - b->pos;

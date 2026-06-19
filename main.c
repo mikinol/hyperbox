@@ -7,6 +7,7 @@
 #include "./commands/mkdir.h"
 #include "./commands/password_gen.h"
 #include "./commands/tee.h"
+#include "./commands/terminal_gameoflife.h"
 #include "./commands/wc.h"
 
 [[noreturn]] int main(int argc, char **argv) {
@@ -41,13 +42,13 @@
       func = do_password_gen;
     } else if (strcmp(cmd, "discord_snowflake_parse") == 0) {
       func = do_discord_snowflake_parse;
+    } else if (strcmp(cmd, "terminal_gameoflife") == 0) {
+      func = do_terminal_gameoflife;
     }
   }
 
-  if (likely(func)) {
+  if (likely(func))
     func(argc, argv);
-  }
-
 incorrect:
   WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");
   exit(1);
