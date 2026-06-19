@@ -63,6 +63,7 @@ static inline void read_files_to_stdout(int argc, char **argv) {
     print_flush(&STDOUT_IO);
   } else {
     read_files_to_stdout(argc, argv);
+    print_flush(&STDOUT_IO);
   }
 
   exit(0);
