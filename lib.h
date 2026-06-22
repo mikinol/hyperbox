@@ -168,7 +168,10 @@ static inline void print_errno_formatted(io_buffer_t *b, errno_flag_t flag) {
                               char: print_char,                                                                                            \
                               long: print_long,                                                                                            \
                               int: print_long,                                                                                             \
+                              unsigned long: print_long,                                                                                   \
+                              uint32_t: print_long,                                                                                        \
                               uint16_t: print_long,                                                                                        \
+                              int8_t: print_long,                                                                                          \
                               uint8_t: print_long)((b), (X)));                                                                             \
   } while (0)
 

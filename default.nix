@@ -1,6 +1,7 @@
 {
   stdenv,
   clang,
+  hwdata,
 }:
 stdenv.mkDerivation {
   pname = "hyperbox";
@@ -10,10 +11,13 @@ stdenv.mkDerivation {
 
   hardeningDisable = ["stackprotector"];
 
+  nativeBuildInputs = [ clang ];
+  buildInputs = [ hwdata ];
+
   buildPhase = let
     cpu = stdenv.hostPlatform.gcc.arch or "x86-64";
   in ''
-    ${clang}/bin/clang -march=${cpu} -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -fassociative-math -fomit-frame-pointer main.c -o hyperbox
+    ${clang}/bin/clang -march=${cpu} -DOUI_PATH="\"${hwdata}/share/hwdata/oui.txt\"" -DOUI_SIZE="$(stat -c%s "${hwdata}/share/hwdata/oui.txt")" -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -fassociative-math -fomit-frame-pointer main.c -o hyperbox
   '';
 
   installPhase = ''
@@ -29,5 +33,6 @@ stdenv.mkDerivation {
     ln -s hyperbox $out/bin/wc
     ln -s hyperbox $out/bin/cp
     ln -s hyperbox $out/bin/tee
+    ln -s hyperbox $out/bin/maccheck
   '';
 }

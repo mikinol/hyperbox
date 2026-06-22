@@ -4,6 +4,7 @@
 #include "./commands/cp.h"
 #include "./commands/discord_snowflake_parse.h"
 #include "./commands/echo.h"
+#include "./commands/maccheck.h"
 #include "./commands/mkdir.h"
 #include "./commands/password_gen.h"
 #include "./commands/tee.h"
@@ -20,7 +21,7 @@
   typedef void (*worker_fn)(int, char **);
   worker_fn func = NULL;
 
-  if (len < 8) {
+  if (len <= 8) {
     uint64_t cmd_v = 0;
     memcpy(&cmd_v, cmd, len);
 
@@ -36,6 +37,8 @@
       func = do_tee;
     } else if (cmd_v == STR_TO_UINT64("cp")) {
       func = do_cp;
+    } else if (cmd_v == STR_TO_UINT64("maccheck")) {
+      func = do_maccheck;
     }
   } else {
     if (strcmp(cmd, "password_gen") == 0) {

@@ -1,8 +1,18 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+IFS=':' read -ra DIRS <<< "$XDG_DATA_DIRS:/usr/share:/var/lib"
+
+OUI_PATH="/nix/store/bazbfy39njrwsyb79a5mblx2cmal3907-hwdata-0.406/share/hwdata/oui.txt"
+for dir in "${DIRS[@]}"; do
+    if [[ -f "$dir/hwdata/oui.txt" ]]; then
+        OUI_PATH="$dir/hwdata/oui.txt"
+        break
+    fi
+done
 
 if [ -n "$TERMUX_VERSION" ]; then
-  cc -s -Wall -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+  cc -DOUI_PATH="\"$OUI_PATH\"" -s -Wall -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
 else
-  cc -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+  cc -DOUI_PATH="\"$OUI_PATH\"" -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
 fi
 
