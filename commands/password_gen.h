@@ -15,7 +15,7 @@ static enum dictionaries parse_dict(const char *arg) {
   return UNKNOWN;
 }
 
-static void help() {
+[[noreturn]] static void help() {
   WRITE_LITERAL(
       STDERR_FILENO,
       "Недостаточно агрументов, "
@@ -34,14 +34,14 @@ static void parse_length_and_count(uint64_t *length, uint64_t *count, char **arg
 
   *length = strtoull(argv[1], &end, 10);
 
-  if (end == argv[1] || *end != '\0') {
+  if (unlikely(end == argv[1] || *end != '\0')) {
     WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: password length isn't a number\n");
     exit(1);
   }
 
   *count = strtoull(argv[2], &end, 10);
 
-  if (end == argv[2] || *end != '\0') {
+  if (unlikely(end == argv[2] || *end != '\0')) {
     WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: passwords count isn't a number\n");
     exit(1);
   }
@@ -50,7 +50,7 @@ static void parse_length_and_count(uint64_t *length, uint64_t *count, char **arg
 static void parse_predefined_dictionary_from_argv(enum dictionaries *dict, int *pool_size, char *pool, char **argv) {
   *dict = parse_dict(argv[3] + 1);
 
-  if (*dict == UNKNOWN) {
+  if (unlikely(*dict == UNKNOWN)) {
     print(&STDERR_IO, "Undefined dictionary: ", argv[3] + 1, _endl);
     exit(1);
   }
@@ -63,7 +63,7 @@ static void parse_dictionary_from_argv(int *pool_size, char *pool, char **argv) 
   char *src = argv[3];
   *pool_size = strlen(src);
 
-  if (*pool_size > 256) {
+  if (unlikely(*pool_size > 256)) {
     WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: dictionary is larger than 256 symbols\n");
     exit(1);
   }
@@ -153,11 +153,11 @@ static int64_t recalc_bufsize(double success_percent, double needbytes) {
     parse_predefined_dictionary_from_argv(&dict, &pool_size, pool, argv);
   } else if (argc > 3 && *argv[3] != '-' && *argv[3] != '+') {
     parse_dictionary_from_argv(&pool_size, pool, argv);
-  } else if (argc == 3 || (argc > 3 && (*argv[3] == '-' || *argv[3] == '+'))) {
+  } else {
     parse_contains_dictionary_from_argv(&pool_size, pool, argc, argv);
   }
 
-  if (pool_size == 0) {
+  if (unlikely(pool_size == 0)) {
     WRITE_LITERAL(STDERR_FILENO, "Error: dictionary size = 0\n");
     exit(1);
   }
@@ -186,7 +186,7 @@ static int64_t recalc_bufsize(double success_percent, double needbytes) {
       buf_size =
           recalc_bufsize(success_percent, (password_size - (current_password * length) - current_password_char) / (is_four ? 2.0 : 1.0));
       bytes_read = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
-      if (bytes_read <= 0) {
+      if (unlikely(bytes_read <= 0)) {
         print(&STDERR_IO, "Getrandom failed: ", _errno, _endl);
         exit(1);
       }
