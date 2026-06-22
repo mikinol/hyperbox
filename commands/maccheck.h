@@ -165,6 +165,11 @@ static inline void parse_argv_to_ints(int argc, char **argv) {
   bool is_printing = false;
   for (long i = 0; i < oui_file_size && count_printed < count_args; i++) {
     if (oui_file[i] == '\n') {
+      if (old_endl_pos + 1 == i) {
+        num = 0;
+        continue;
+      }
+
       if (num == 1) {
         char *readpos = oui_file + old_endl_pos + 1;
         uint32_t cur_oui = simple_oui_to_int(readpos);
@@ -172,7 +177,7 @@ static inline void parse_argv_to_ints(int argc, char **argv) {
           if (cur_oui == ((uint32_t *)STDIN_IO.buf)[j]) {
             print(&STDOUT_IO, "OUI: ");
             print_array(&STDOUT_IO, readpos, 6);
-            print(&STDOUT_IO, "Type: Global\nVendor: ");
+            print(&STDOUT_IO, "\nType: Global\nVendor: ");
             readpos += 22;
             print_array(&STDOUT_IO, readpos, oui_file + i - readpos + 1);
 
