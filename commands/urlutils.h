@@ -27,7 +27,7 @@
 
   print_flush(&STDOUT_IO);
 
-  if (ret < 0) {
+  if (unlikely(ret < 0)) {
     print(&STDERR_IO, "Cannot read stdin: ", _errno, _endl);
     exit(1);
   }
@@ -36,27 +36,35 @@
 }
 
 [[noreturn]] static inline void do_urldecode(int argc, char **argv) {
+  bool is_broken;
+
   long ret;
   while ((ret = read(STDIN_FILENO, STDIN_IO.buf, STDIN_IO.size)) > 0) {
     char *last_normal = STDIN_IO.buf;
-    for (char *i = STDIN_IO.buf; i < (STDIN_IO.buf + ret); i++) {
+    char *end = STDIN_IO.buf + ret;
+    for (char *i = STDIN_IO.buf; i < end; i++) {
       if (*i == '%') {
         if (last_normal != i) {
           print_array(&STDOUT_IO, last_normal, i - last_normal);
         }
 
+        if (unlikely(i + 2 >= end)) {
+          is_broken = true;
+          continue;
+        }
+
         i++;
         char ch = hex_to_val(*i);
-        if (ch == -1) {
-          print(&STDERR_IO, "Broken string", _endl);
-          exit(1);
+        if (unlikely(ch == -1)) {
+          is_broken = true;
+          continue;
         }
 
         i++;
         char ch1 = hex_to_val(*i);
-        if (ch1 == -1) {
-          print(&STDERR_IO, "Broken string", _endl);
-          exit(1);
+        if (unlikely(ch1 == -1)) {
+          is_broken = true;
+          continue;
         }
         ch = (ch << 4) | ch1;
 
@@ -65,18 +73,20 @@
       }
     }
 
-    if (last_normal < STDIN_IO.buf + ret) {
-      print_array(&STDOUT_IO, last_normal, (STDIN_IO.buf + ret) - last_normal);
+    if (last_normal < end) {
+      print_array(&STDOUT_IO, last_normal, end - last_normal);
     }
   }
 
   print_flush(&STDOUT_IO);
 
-  if (ret < 0) {
+  if (unlikely(ret < 0)) {
     print(&STDERR_IO, "Cannot read stdin: ", _errno, _endl);
     exit(1);
   }
 
-  exit(0);
-  ;
+  if (is_broken)
+    print(&STDERR_IO, "Broken string", _endl);
+
+  exit(is_broken);
 }
