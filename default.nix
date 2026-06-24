@@ -11,8 +11,8 @@ stdenv.mkDerivation {
 
   hardeningDisable = ["stackprotector"];
 
-  nativeBuildInputs = [ clang ];
-  buildInputs = [ hwdata ];
+  nativeBuildInputs = [clang];
+  buildInputs = [hwdata];
 
   buildPhase = let
     cpu = stdenv.hostPlatform.gcc.arch or "x86-64";
@@ -27,12 +27,14 @@ stdenv.mkDerivation {
     ln -s hyperbox $out/bin/discord_snowflake_parse
     ln -s hyperbox $out/bin/terminal_gameoflife
     ln -s hyperbox $out/bin/password_gen
-    ln -s hyperbox $out/bin/cat
-    ln -s hyperbox $out/bin/echo
+    ln -s hyperbox $out/bin/urlencode
+    ln -s hyperbox $out/bin/urldecode
+    ln -s hyperbox $out/bin/maccheck
     ln -s hyperbox $out/bin/mkdir
+    ln -s hyperbox $out/bin/echo
+    ln -s hyperbox $out/bin/tee
+    ln -s hyperbox $out/bin/cat
     ln -s hyperbox $out/bin/wc
     ln -s hyperbox $out/bin/cp
-    ln -s hyperbox $out/bin/tee
-    ln -s hyperbox $out/bin/maccheck
   '';
 }

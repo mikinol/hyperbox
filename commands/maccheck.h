@@ -39,16 +39,6 @@ static inline void open_ouifile() {
   close(fd);
 }
 
-static inline int hex_to_val(char c) {
-  if (c >= '0' && c <= '9')
-    return c - '0';
-  if (c >= 'a' && c <= 'f')
-    return c - 'a' + 10;
-  if (c >= 'A' && c <= 'F')
-    return c - 'A' + 10;
-  return -1;
-}
-
 static inline uint32_t simple_oui_to_int(char *start) {
   uint32_t res = 0;
   for (int i = 0; i < 6; i++) {
@@ -56,12 +46,6 @@ static inline uint32_t simple_oui_to_int(char *start) {
   }
 
   return res;
-}
-
-static inline char val_to_hex(uint8_t val) {
-  if (val < 10)
-    return '0' + val;
-  return 'A' + (val - 10);
 }
 
 void print_oui_base16(uint32_t res) {

@@ -9,6 +9,7 @@
 #include "./commands/password_gen.h"
 #include "./commands/tee.h"
 #include "./commands/terminal_gameoflife.h"
+#include "./commands/urlutils.h"
 #include "./commands/wc.h"
 
 [[noreturn]] int main(int argc, char **argv) {
@@ -47,6 +48,10 @@
       func = do_discord_snowflake_parse;
     } else if (strcmp(cmd, "terminal_gameoflife") == 0) {
       func = do_terminal_gameoflife;
+    } else if (strcmp(cmd, "urlencode") == 0) {
+      func = do_urlencode;
+    } else if (strcmp(cmd, "urldecode") == 0) {
+      func = do_urldecode;
     }
   }
 
