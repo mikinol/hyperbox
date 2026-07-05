@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 #ifndef OUI_PATH
 #define OUI_PATH "/usr/share/hwdata/oui.txt"

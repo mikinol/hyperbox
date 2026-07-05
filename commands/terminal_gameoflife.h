@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 struct winsize w;
 
 volatile int stop = 0;

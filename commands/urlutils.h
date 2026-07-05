@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 [[noreturn]] static inline void do_urlencode(int argc, char **argv) {
   long ret;

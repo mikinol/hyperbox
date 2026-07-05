@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 [[noreturn]] static inline void do_tee(int argc, char **argv) {
   int fds[argc];

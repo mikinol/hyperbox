@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 #define COPY_IO STDIN_IO
 

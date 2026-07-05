@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 const char *dicts[2] = {
     "0123456789ABCDEF", // hexupper

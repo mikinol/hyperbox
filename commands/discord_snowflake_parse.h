@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 #define DISCORD_EPOCH 1420070400000ULL
 

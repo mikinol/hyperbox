@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "mikinolibc/lib.h"
 
 #include "./commands/cat.h"
 #include "./commands/cp.h"

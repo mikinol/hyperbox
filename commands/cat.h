@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 static inline void read_file_with_read_write(int fd, char *filename) {
   long ret = print_fd_to_end(&STDOUT_IO, fd);

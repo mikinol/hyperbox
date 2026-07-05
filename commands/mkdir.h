@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 static inline void do_recursive_mkdir(char *path) {
   bool was_slash = false;

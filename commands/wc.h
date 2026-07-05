@@ -1,4 +1,4 @@
-#include "../lib.h"
+#include "../mikinolibc/lib.h"
 
 static inline long count_bytes_in_any_fd(int fd) {
   long readed = 0;
