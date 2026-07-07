@@ -15,21 +15,27 @@ static enum dictionaries parse_dict(const char *arg) {
   return UNKNOWN;
 }
 
-[[noreturn]] static void help() {
+[[noreturn]] static inline void help() {
   WRITE_LITERAL(
       STDERR_FILENO,
       "Недостаточно агрументов, "
       "password_gen <длинна пароля> <количество паролей> (+s включает специальные символы) (-c выключает символы) (-n выключает цифры)\n"
       "Или можно password_gen <длинна пароля> <количество паролей> <список доступных символов>\n"
+      "Если вместо количества паролей стоит \"n\" то это значит 1 пароль, без новой строки на конце"
       "И ещё можно использовать другие словари "
       "password_gen <длинна пароля> <количество паролей> @<название словаря>\n"
       "Словари:\n"
       "- hexupper — HEX с большими буквами\n"
-      "- hexlower — HEX с маленькими буквами\n");
+      "- hexlower — HEX с маленькими буквами\n\n"
+      "Или ещё можно генерировать uuid:\n"
+      "password_gen uuid <количество uuid>\n"
+      "Вместо количества uuid также можно указать n и получить 1 uuid без разделителя строки\n");
   exit(1);
 }
 
-static void parse_length_and_count(uint64_t *length, uint64_t *count, char **argv) {
+bool is_end_without_endl = false;
+
+static inline void parse_length_and_count(uint64_t *length, uint64_t *count, char **argv) {
   char *end;
 
   *length = strtoull(argv[1], &end, 10);
@@ -37,6 +43,12 @@ static void parse_length_and_count(uint64_t *length, uint64_t *count, char **arg
   if (unlikely(end == argv[1] || *end != '\0')) {
     WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: password length isn't a number\n");
     exit(1);
+  }
+
+  if (argv[2][0] == 'n' && argv[2][1] == '\0') {
+    *count = 1;
+    is_end_without_endl = true;
+    return;
   }
 
   *count = strtoull(argv[2], &end, 10);
@@ -59,7 +71,7 @@ static void parse_predefined_dictionary_from_argv(enum dictionaries *dict, int *
   memcpy(pool, dicts[*dict], *pool_size);
 }
 
-static void parse_dictionary_from_argv(int *pool_size, char *pool, char **argv) {
+static inline void parse_dictionary_from_argv(int *pool_size, char *pool, char **argv) {
   char *src = argv[3];
   *pool_size = strlen(src);
 
@@ -71,7 +83,7 @@ static void parse_dictionary_from_argv(int *pool_size, char *pool, char **argv) 
   memcpy(pool, src, *pool_size);
 }
 
-static void parse_contains_dictionary_from_argv(int *pool_size, char *pool, const int argc, char **argv) {
+static inline void parse_contains_dictionary_from_argv(int *pool_size, char *pool, const int argc, char **argv) {
   static const char letters[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   static const char numbers[10] = "0123456789";
   static const char symbols[25] = "!@#$%^&*()_+[]{}|;:',.<>?";
@@ -119,7 +131,7 @@ static void parse_contains_dictionary_from_argv(int *pool_size, char *pool, cons
   }
 }
 
-static int64_t recalc_bufsize(double success_percent, double needbytes) {
+static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
   double result = needbytes / success_percent;
 
   if (result > STDIN_IO.size) {
@@ -134,9 +146,98 @@ static int64_t recalc_bufsize(double success_percent, double needbytes) {
   return truncated + (truncated < result);
 }
 
+[[noreturn]] static inline void generate_uuids(int argc, char **argv) {
+  static char default_uuid[37] = "xxxxxxxx-xxxx-4xxx-Vxxx-xxxxxxxxxxxx\n";
+
+  long count;
+  if (argv[2][0] == 'n' && argv[2][1] == '\0') {
+    count = 1;
+    is_end_without_endl = true;
+  } else {
+    char *end;
+    count = strtoull(argv[2], &end, 10);
+
+    if (unlikely(end == argv[2] || *end != '\0')) {
+      WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: passwords count isn't a number\n");
+      exit(1);
+    }
+  }
+
+  int max_buf_size = count * 16;
+
+  int current_char = 0;
+  int current_password = 0;
+
+  int bytes_read = 0;
+  int current_byte = 0;
+  while (true) {
+    if (current_byte >= bytes_read) {
+      current_byte = 0;
+
+      int buf_size = max_buf_size - ((current_password * 15) + current_char);
+
+      if (buf_size > STDIN_IO.size) {
+        buf_size = STDIN_IO.size;
+      }
+
+      bytes_read = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
+      if (unlikely(bytes_read <= 0)) {
+        print_flush(&STDOUT_IO);
+        print(&STDERR_IO, "Getrandom failed: ", _errno, _endl);
+        exit(1);
+      }
+    }
+
+    unsigned char byte = STDIN_IO.buf[current_byte];
+    char val1 = val_to_hex_lower(byte >> 4);
+    char val2 = val_to_hex_lower(byte & 0x0F);
+
+    if (current_char < 4) {
+      default_uuid[current_char * 2] = val1;
+      default_uuid[current_char * 2 + 1] = val2;
+    } else if (current_char < 6) {
+      default_uuid[current_char * 2 + 1] = val1;
+      default_uuid[current_char * 2 + 2] = val2;
+    } else if (current_char == 6) {
+      default_uuid[15] = val1;
+      default_uuid[16] = val2;
+    } else if (current_char == 7) {
+      default_uuid[17] = val1;
+    } else if (current_char == 8) {
+      default_uuid[19] = val_to_hex_lower((byte >> 6) | 0b1000);
+      default_uuid[20] = val2;
+    } else if (current_char == 9) {
+      default_uuid[21] = val1;
+      default_uuid[22] = val2;
+    } else {
+      default_uuid[current_char * 2 + 4] = val1;
+      default_uuid[current_char * 2 + 5] = val2;
+
+      if (current_char == 15) {
+        print_array(&STDOUT_IO, default_uuid, sizeof(default_uuid) - is_end_without_endl);
+        current_password++;
+        current_char = -1;
+
+        if (current_password == count)
+          break;
+      }
+    }
+
+    current_byte++;
+    current_char++;
+  }
+
+  print_flush(&STDOUT_IO);
+  exit(0);
+}
+
 [[noreturn]] void do_password_gen(int argc, char **argv) {
   if (argc < 3) {
     help();
+  }
+
+  if (argv[1][0] == 'u' && argv[1][1] == 'u' && argv[1][2] == 'i' && argv[1][3] == 'd') {
+    generate_uuids(argc, argv);
   }
 
   uint64_t length, count;
