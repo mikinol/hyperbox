@@ -32,6 +32,7 @@ stdenv.mkDerivation {
     ln -s hyperbox $out/bin/maccheck
     ln -s hyperbox $out/bin/mkdir
     ln -s hyperbox $out/bin/echo
+    ln -s hyperbox $out/bin/vis
     ln -s hyperbox $out/bin/tee
     ln -s hyperbox $out/bin/cat
     ln -s hyperbox $out/bin/wc

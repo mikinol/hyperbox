@@ -10,6 +10,7 @@
 #include "./commands/tee.h"
 #include "./commands/terminal_gameoflife.h"
 #include "./commands/urlutils.h"
+#include "./commands/vis.h"
 #include "./commands/wc.h"
 
 [[noreturn]] int main(int argc, char **argv) {
@@ -40,6 +41,8 @@
       func = do_cp;
     } else if (cmd_v == STR_TO_UINT64("maccheck")) {
       func = do_maccheck;
+    } else if (cmd_v == STR_TO_UINT64("vis")) {
+      func = do_vis;
     }
   } else {
     if (strcmp(cmd, "password_gen") == 0) {
