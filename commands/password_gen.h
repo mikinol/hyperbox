@@ -38,32 +38,32 @@ bool is_end_without_endl = false;
 static inline void parse_length_and_count(uint64_t *length, uint64_t *count, char **argv) {
   char *end;
 
-  *length = strtoull(argv[1], &end, 10);
+  *length = strtoull(argv[0], &end, 10);
 
-  if (unlikely(end == argv[1] || *end != '\0')) {
+  if (unlikely(end == argv[0] || *end != '\0')) {
     WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: password length isn't a number\n");
     exit(1);
   }
 
-  if (argv[2][0] == 'n' && argv[2][1] == '\0') {
+  if (argv[1][0] == 'n' && argv[1][1] == '\0') {
     *count = 1;
     is_end_without_endl = true;
     return;
   }
 
-  *count = strtoull(argv[2], &end, 10);
+  *count = strtoull(argv[1], &end, 10);
 
-  if (unlikely(end == argv[2] || *end != '\0')) {
+  if (unlikely(end == argv[1] || *end != '\0')) {
     WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: passwords count isn't a number\n");
     exit(1);
   }
 }
 
 static void parse_predefined_dictionary_from_argv(enum dictionaries *dict, int *pool_size, char *pool, char **argv) {
-  *dict = parse_dict(argv[3] + 1);
+  *dict = parse_dict(argv[2] + 1);
 
   if (unlikely(*dict == UNKNOWN)) {
-    print(&STDERR_IO, "Undefined dictionary: ", argv[3] + 1, _endl);
+    print(&STDERR_IO, "Undefined dictionary: ", argv[2] + 1, _endl);
     exit(1);
   }
 
@@ -72,7 +72,7 @@ static void parse_predefined_dictionary_from_argv(enum dictionaries *dict, int *
 }
 
 static inline void parse_dictionary_from_argv(int *pool_size, char *pool, char **argv) {
-  char *src = argv[3];
+  char *src = argv[2];
   *pool_size = strlen(src);
 
   if (unlikely(*pool_size > 256)) {
@@ -92,7 +92,7 @@ static inline void parse_contains_dictionary_from_argv(int *pool_size, char *poo
   bool contains_symbols = false;
   bool contains_numbers = true;
 
-  for (int i = 3; i < argc; i++) {
+  for (int i = 2; i < argc; i++) {
     char *arg = argv[i];
 
     if (strlen(arg) != 2 || (arg[0] != '+' && arg[0] != '-')) {
@@ -146,18 +146,18 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
   return truncated + (truncated < result);
 }
 
-[[noreturn]] static inline void generate_uuids(int argc, char **argv) {
+static inline void generate_uuids(int argc, char **argv) {
   static char default_uuid[37] = "xxxxxxxx-xxxx-4xxx-Vxxx-xxxxxxxxxxxx\n";
 
   long count;
-  if (argv[2][0] == 'n' && argv[2][1] == '\0') {
+  if (argv[1][0] == 'n' && argv[1][1] == '\0') {
     count = 1;
     is_end_without_endl = true;
   } else {
     char *end;
-    count = strtoull(argv[2], &end, 10);
+    count = strtoull(argv[1], &end, 10);
 
-    if (unlikely(end == argv[2] || *end != '\0')) {
+    if (unlikely(end == argv[1] || *end != '\0')) {
       WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: passwords count isn't a number\n");
       exit(1);
     }
@@ -226,18 +226,16 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
     current_byte++;
     current_char++;
   }
-
-  print_flush(&STDOUT_IO);
-  exit(0);
 }
 
-[[noreturn]] void do_password_gen(int argc, char **argv) {
-  if (argc < 3) {
+static inline void run_do_password_gen(int argc, char **argv) {
+  if (unlikely(argc < 2)) {
     help();
   }
 
-  if (argv[1][0] == 'u' && argv[1][1] == 'u' && argv[1][2] == 'i' && argv[1][3] == 'd') {
+  if (argv[0][0] == 'u' && argv[0][1] == 'u' && argv[0][2] == 'i' && argv[0][3] == 'd' && argv[0][4] == '\0') {
     generate_uuids(argc, argv);
+    return;
   }
 
   uint64_t length, count;
@@ -250,9 +248,9 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
 
   enum dictionaries dict = UNKNOWN;
 
-  if (argc > 3 && *argv[3] == '@') {
+  if (argc > 2 && *argv[2] == '@') {
     parse_predefined_dictionary_from_argv(&dict, &pool_size, pool, argv);
-  } else if (argc > 3 && *argv[3] != '-' && *argv[3] != '+') {
+  } else if (argc > 2 && *argv[2] != '-' && *argv[2] != '+') {
     parse_dictionary_from_argv(&pool_size, pool, argv);
   } else {
     parse_contains_dictionary_from_argv(&pool_size, pool, argc, argv);
@@ -268,23 +266,20 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
   int limit = maxsize - (maxsize % pool_size);
   double success_percent = (double)limit / maxsize;
 
-  int64_t buf_size;
-
   int bytes_read = 0;
   int current_byte = 0;
 
-  int current_write_byte = 0;
+  int current_write_byte = STDOUT_IO.pos;
 
   int current_password = 0;
   int current_password_char = 0;
 
   unsigned char byte;
-  unsigned char current_read_byte;
   while (true) {
     if (current_byte >= bytes_read) {
       current_byte = 0;
 
-      buf_size =
+      int64_t buf_size =
           recalc_bufsize(success_percent, (password_size - (current_password * length) - current_password_char) / (is_four ? 2.0 : 1.0));
       bytes_read = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
       if (unlikely(bytes_read <= 0)) {
@@ -293,7 +288,7 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
       }
     }
 
-    current_read_byte = STDIN_IO.buf[current_byte];
+    unsigned char current_read_byte = STDIN_IO.buf[current_byte];
     if (is_four) {
       byte = current_read_byte >> 4;
       if (byte < limit) {
@@ -361,7 +356,27 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
   }
 
   if (current_write_byte > 0)
-    write(1, STDOUT_IO.buf, current_write_byte);
+    STDOUT_IO.pos = current_write_byte;
+}
 
+[[noreturn]] void do_password_gen(int argc, char **argv) {
+  if (unlikely(argc < 3)) {
+    help();
+  }
+
+  int last_i = 1;
+  for (int i = 1;;) {
+    if ((argv[i][0] == '-' && argv[i][1] == '-' && argv[i][2] == '\0')) {
+      run_do_password_gen(i - last_i, argv + last_i);
+      last_i = i + 1;
+    }
+
+    if (++i == argc) {
+      run_do_password_gen(i - last_i, argv + last_i);
+      break;
+    }
+  }
+
+  print_flush(&STDOUT_IO);
   exit(0);
 }
