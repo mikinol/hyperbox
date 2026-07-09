@@ -269,8 +269,6 @@ static inline void run_do_password_gen(int argc, char **argv) {
   int bytes_read = 0;
   int current_byte = 0;
 
-  int current_write_byte = STDOUT_IO.pos;
-
   int current_password = 0;
   int current_password_char = 0;
 
@@ -292,18 +290,14 @@ static inline void run_do_password_gen(int argc, char **argv) {
     if (is_four) {
       byte = current_read_byte >> 4;
       if (byte < limit) {
-        STDOUT_IO.buf[current_write_byte++] = pool[byte % pool_size];
+        print_char(&STDOUT_IO, pool[byte % pool_size]);
         current_password_char++;
 
         if (current_password_char == length) {
-          STDOUT_IO.buf[current_write_byte++] = '\n';
+          if (!is_end_without_endl)
+            print_char(&STDOUT_IO, '\n');
           current_password_char = 0;
           current_password++;
-        }
-
-        if (current_write_byte > STDOUT_IO.size - 3) {
-          write(1, STDOUT_IO.buf, current_write_byte);
-          current_write_byte = 0;
         }
 
         if (current_password == count) {
@@ -314,18 +308,14 @@ static inline void run_do_password_gen(int argc, char **argv) {
       byte = current_read_byte & 0x0F;
       current_byte++;
       if (byte < limit) {
-        STDOUT_IO.buf[current_write_byte++] = pool[byte % pool_size];
+        print_char(&STDOUT_IO, pool[byte % pool_size]);
         current_password_char++;
 
         if (current_password_char == length) {
-          STDOUT_IO.buf[current_write_byte++] = '\n';
+          if (!is_end_without_endl)
+            print_char(&STDOUT_IO, '\n');
           current_password_char = 0;
           current_password++;
-        }
-
-        if (current_write_byte > STDOUT_IO.size - 3) {
-          write(1, STDOUT_IO.buf, current_write_byte);
-          current_write_byte = 0;
         }
       }
     } else {
@@ -335,18 +325,14 @@ static inline void run_do_password_gen(int argc, char **argv) {
       if (byte >= limit)
         continue;
 
-      STDOUT_IO.buf[current_write_byte++] = pool[byte % pool_size];
+      print_char(&STDOUT_IO, pool[byte % pool_size]);
       current_password_char++;
 
       if (current_password_char == length) {
-        STDOUT_IO.buf[current_write_byte++] = '\n';
+        if (!is_end_without_endl)
+          print_char(&STDOUT_IO, '\n');
         current_password_char = 0;
         current_password++;
-      }
-
-      if (current_write_byte > STDOUT_IO.size - 3) {
-        write(1, STDOUT_IO.buf, current_write_byte);
-        current_write_byte = 0;
       }
     }
 
@@ -354,9 +340,6 @@ static inline void run_do_password_gen(int argc, char **argv) {
       break;
     }
   }
-
-  if (current_write_byte > 0)
-    STDOUT_IO.pos = current_write_byte;
 }
 
 [[noreturn]] void do_password_gen(int argc, char **argv) {

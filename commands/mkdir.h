@@ -26,7 +26,7 @@ static inline void do_recursive_mkdir(char *path) {
 
   if (was_slash == false) {
     int ret = mkdir(path, 0777);
-    if (ret < 0 && errno != EEXIST) {
+    if (unlikely(ret < 0 && errno != EEXIST)) {
       print(&STDERR_IO, "Cannot create directory \'", path, "\': ", _errno, _endl);
       exit(1);
     }
@@ -40,7 +40,7 @@ static inline void do_recursive_mkdir(char *path) {
     exit(1);
   }
 
-  if (strcmp(argv[1], "-p") == 0) {
+  if (argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0') {
     for (int i = 2; i < argc; i++) {
       do_recursive_mkdir(argv[i]);
     }
@@ -48,7 +48,7 @@ static inline void do_recursive_mkdir(char *path) {
     for (int i = 1; i < argc; i++) {
       int ret = mkdir(argv[i], 0777);
 
-      if (ret < 0) {
+      if (unlikely(ret < 0)) {
         print(&STDERR_IO, "Couldn't mkdir ", argv[i], ": ", _errno, _endl);
         exit(1);
       }
