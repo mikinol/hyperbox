@@ -16,7 +16,9 @@ noreturn static inline void do_urlencode(int argc, char **argv) {
         print_array(&STDOUT_IO, last_normal, i - last_normal);
       }
 
-      print(&STDOUT_IO, "%", val_to_hex(((unsigned char)*i) >> 4), val_to_hex(((unsigned char)*i) % 16));
+      print_char(&STDOUT_IO, '%');
+      print_char(&STDOUT_IO, val_to_hex(((unsigned char)*i) >> 4));
+      print_char(&STDOUT_IO, val_to_hex(((unsigned char)*i) % 16));
       last_normal = i + 1;
     }
 
@@ -68,7 +70,7 @@ noreturn static inline void do_urldecode(int argc, char **argv) {
         }
         ch = (ch << 4) | ch1;
 
-        print_array(&STDOUT_IO, &ch, 1);
+        print_char(&STDOUT_IO, ch);
         last_normal = i + 1;
       }
     }
