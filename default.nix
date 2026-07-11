@@ -17,7 +17,7 @@ stdenv.mkDerivation {
   buildPhase = let
     cpu = stdenv.hostPlatform.gcc.arch or "x86-64";
   in ''
-    ${clang}/bin/clang -march=${cpu} -DOUI_PATH="\"${hwdata}/share/hwdata/oui.txt\"" -DOUI_SIZE="$(stat -c%s "${hwdata}/share/hwdata/oui.txt")" -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -fassociative-math -fomit-frame-pointer main.c -o hyperbox
+    ${clang}/bin/clang -march=${cpu} -DOUI_PATH="\"${hwdata}/share/hwdata/oui.txt\"" -DOUI_SIZE="$(stat -c%s "${hwdata}/share/hwdata/oui.txt")" -s -Wall -Wno-c23-extensions -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -fassociative-math -fomit-frame-pointer main.c -o hyperbox
   '';
 
   installPhase = ''

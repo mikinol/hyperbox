@@ -15,6 +15,8 @@ static enum dictionaries parse_dict(const char *arg) {
   return UNKNOWN;
 }
 
+static int current_byte = 0;
+
 [[noreturn]] static inline void help() {
   WRITE_LITERAL(
       STDERR_FILENO,
@@ -132,15 +134,15 @@ static inline void parse_contains_dictionary_from_argv(int *pool_size, char *poo
 }
 
 static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
+  if (success_percent == 1.0)
+    return needbytes;
+
   double result = needbytes / success_percent;
 
-  if (result > STDIN_IO.size) {
+  if (result > STDIN_IO.size)
     return STDIN_IO.size;
-  }
-
-  if (success_percent != 1.0 && result < 16) {
+  if (result < 16)
     return 16;
-  }
 
   int64_t truncated = result;
   return truncated + (truncated < result);
@@ -149,29 +151,29 @@ static inline int64_t recalc_bufsize(double success_percent, double needbytes) {
 static inline void generate_uuids(int argc, char **argv) {
   static char default_uuid[37] = "xxxxxxxx-xxxx-4xxx-Vxxx-xxxxxxxxxxxx\n";
 
-  long count;
-  if (argv[1][0] == 'n' && argv[1][1] == '\0') {
-    count = 1;
+  long count = 1;
+  if (argv[1][0] == 'n') {
     is_end_without_endl = true;
-  } else {
-    char *end;
-    count = strtoull(argv[1], &end, 10);
 
-    if (unlikely(end == argv[1] || *end != '\0')) {
-      WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: passwords count isn't a number\n");
-      exit(1);
+    if (argv[1][1] == '\0') {
+      goto skip_parsing;
     }
   }
 
+  char *end;
+  count = strtoull(argv[1] + is_end_without_endl, &end, 10);
+  if (unlikely(end == argv[1] + is_end_without_endl || *end != '\0')) {
+    WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: passwords count isn't a number\n");
+    exit(1);
+  }
+
+skip_parsing:
   int max_buf_size = count * 16;
 
   int current_char = 0;
   int current_password = 0;
-
-  int bytes_read = 0;
-  int current_byte = 0;
   while (true) {
-    if (current_byte >= bytes_read) {
+    if (current_byte >= STDIN_IO.pos) {
       current_byte = 0;
 
       int buf_size = max_buf_size - ((current_password * 15) + current_char);
@@ -180,8 +182,8 @@ static inline void generate_uuids(int argc, char **argv) {
         buf_size = STDIN_IO.size;
       }
 
-      bytes_read = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
-      if (unlikely(bytes_read <= 0)) {
+      STDIN_IO.pos = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
+      if (unlikely(STDIN_IO.pos <= 0)) {
         print_flush(&STDOUT_IO);
         print(&STDERR_IO, "Getrandom failed: ", _errno, _endl);
         exit(1);
@@ -228,6 +230,25 @@ static inline void generate_uuids(int argc, char **argv) {
   }
 }
 
+static inline void prerandom(int argc, char **argv) {
+  char *end;
+  int64_t buf_size = strtoull(argv[1] + is_end_without_endl, &end, 10);
+  if (unlikely(end == argv[1] + is_end_without_endl || *end != '\0')) {
+    WRITE_LITERAL(STDERR_FILENO, "Arguments parsing error: buffer_size isn't a number\n");
+    exit(1);
+  }
+
+  if (buf_size > STDIN_IO.size)
+    buf_size = STDIN_IO.size;
+
+  STDIN_IO.pos = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
+  if (unlikely(STDIN_IO.pos <= 0)) {
+    print_flush(&STDOUT_IO);
+    print(&STDERR_IO, "Getrandom failed: ", _errno, _endl);
+    exit(1);
+  }
+}
+
 static inline void run_do_password_gen(int argc, char **argv) {
   if (unlikely(argc < 2)) {
     help();
@@ -235,6 +256,11 @@ static inline void run_do_password_gen(int argc, char **argv) {
 
   if (argv[0][0] == 'u' && argv[0][1] == 'u' && argv[0][2] == 'i' && argv[0][3] == 'd' && argv[0][4] == '\0') {
     generate_uuids(argc, argv);
+    return;
+  }
+
+  if (argv[0][0] == 'p' && argv[0][1] == 'r' && argv[0][2] == 'e' && argv[0][3] == '\0') {
+    prerandom(argc, argv);
     return;
   }
 
@@ -266,21 +292,18 @@ static inline void run_do_password_gen(int argc, char **argv) {
   int limit = maxsize - (maxsize % pool_size);
   double success_percent = (double)limit / maxsize;
 
-  int bytes_read = 0;
-  int current_byte = 0;
-
   int current_password = 0;
   int current_password_char = 0;
 
   unsigned char byte;
   while (true) {
-    if (current_byte >= bytes_read) {
+    if (current_byte >= STDIN_IO.pos) {
       current_byte = 0;
 
       int64_t buf_size =
           recalc_bufsize(success_percent, (password_size - (current_password * length) - current_password_char) / (is_four ? 2.0 : 1.0));
-      bytes_read = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
-      if (unlikely(bytes_read <= 0)) {
+      STDIN_IO.pos = syscall(SYS_getrandom, STDIN_IO.buf, buf_size, 0);
+      if (unlikely(STDIN_IO.pos <= 0)) {
         print(&STDERR_IO, "Getrandom failed: ", _errno, _endl);
         exit(1);
       }

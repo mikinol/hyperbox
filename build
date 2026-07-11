@@ -11,8 +11,8 @@ for dir in "${DIRS[@]}"; do
 done
 
 if [ -n "$TERMUX_VERSION" ]; then
-  cc -DOUI_PATH="\"$OUI_PATH\"" -s -Wall -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
-else
-  cc -DOUI_PATH="\"$OUI_PATH\"" -s -Wall -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+  cc -DOUI_PATH="\"$OUI_PATH\"" -s -Wall -Wno-c23-extensions -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
+else 
+  cc -DOUI_PATH="\"$OUI_PATH\"" -s -Wall -Wno-c23-extensions -static -nostdlib -ffreestanding -fno-math-errno -fno-trapping-math -freciprocal-math -march=native -fassociative-math -fomit-frame-pointer ./main.c
 fi
 

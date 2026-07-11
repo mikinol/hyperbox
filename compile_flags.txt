@@ -2,3 +2,4 @@
 -std=c23
 -nostdlib
 -ffreestanding
+-Wno-c23-extensions
