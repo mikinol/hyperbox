@@ -17,7 +17,7 @@ static enum dictionaries parse_dict(const char *arg) {
 
 static int current_byte = 0;
 
-[[noreturn]] static inline void help() {
+noreturn static inline void help() {
   WRITE_LITERAL(
       STDERR_FILENO,
       "Недостаточно агрументов, "
@@ -168,15 +168,18 @@ static inline void generate_uuids(int argc, char **argv) {
   }
 
 skip_parsing:
-  int max_buf_size = count * 16;
+  int max_buf_size = (count * 122 + 7) / 8;
 
   int current_char = 0;
   int current_password = 0;
+  size_t total_bytes_read = 0;
+
+  unsigned char variant_byte = 0b01;
   while (true) {
     if (current_byte >= STDIN_IO.pos) {
       current_byte = 0;
 
-      int buf_size = max_buf_size - ((current_password * 15) + current_char);
+      int buf_size = max_buf_size - total_bytes_read;
 
       if (buf_size > STDIN_IO.size) {
         buf_size = STDIN_IO.size;
@@ -205,9 +208,19 @@ skip_parsing:
       default_uuid[16] = val2;
     } else if (current_char == 7) {
       default_uuid[17] = val1;
-    } else if (current_char == 8) {
-      default_uuid[19] = val_to_hex_lower((byte >> 6) | 0b1000);
       default_uuid[20] = val2;
+    } else if (current_char == 8) {
+      if (variant_byte == 0b01) {
+        variant_byte = (byte >> 2) | 0b01000000;
+        byte = byte & 0b11;
+      } else {
+        current_byte--;
+        total_bytes_read--;
+        byte = variant_byte & 0b11;
+        variant_byte = variant_byte >> 2;
+      }
+
+      default_uuid[19] = val_to_hex_lower(byte | 0b1000);
     } else if (current_char == 9) {
       default_uuid[21] = val1;
       default_uuid[22] = val2;
@@ -225,6 +238,7 @@ skip_parsing:
       }
     }
 
+    total_bytes_read++;
     current_byte++;
     current_char++;
   }
@@ -365,9 +379,9 @@ static inline void run_do_password_gen(int argc, char **argv) {
   }
 }
 
-[[noreturn]] void do_password_gen(int argc, char **argv) {
+noreturn void do_password_gen(int argc, char **argv) {
   if (unlikely(argc < 3)) {
-    help();
+    [[clang::always_inline]] help();
   }
 
   int last_i = 1;

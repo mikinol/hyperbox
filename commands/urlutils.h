@@ -1,6 +1,6 @@
 #include "../mikinolibc/lib.h"
 
-[[noreturn]] static inline void do_urlencode(int argc, char **argv) {
+noreturn static inline void do_urlencode(int argc, char **argv) {
   long ret;
   while ((ret = read(STDIN_FILENO, STDIN_IO.buf, STDIN_IO.size)) > 0) {
     char *last_normal = STDIN_IO.buf;
@@ -35,7 +35,7 @@
   exit(0);
 }
 
-[[noreturn]] static inline void do_urldecode(int argc, char **argv) {
+noreturn static inline void do_urldecode(int argc, char **argv) {
   bool is_broken;
 
   long ret;

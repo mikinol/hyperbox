@@ -1,6 +1,6 @@
 #include "../mikinolibc/lib.h"
 
-[[noreturn]] static inline void do_vis(int argc, char **argv) {
+noreturn static inline void do_vis(int argc, char **argv) {
   ssize_t ret;
   while ((ret = read(STDIN_FILENO, STDIN_IO.buf, STDIN_IO.size)) > 0) {
     size_t last_normal = 0;

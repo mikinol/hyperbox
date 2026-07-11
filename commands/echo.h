@@ -1,6 +1,6 @@
 #include "../mikinolibc/lib.h"
 
-[[noreturn]] static inline void do_echo(int argc, char **argv) {
+noreturn static inline void do_echo(int argc, char **argv) {
   if (unlikely(argc == 1)) {
     WRITE_LITERAL(STDOUT_FILENO, "\n");
     goto exit;

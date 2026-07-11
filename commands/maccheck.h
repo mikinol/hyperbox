@@ -129,7 +129,7 @@ static inline void parse_argv_to_ints(int argc, char **argv) {
   }
 }
 
-[[noreturn]] static inline void do_maccheck(int argc, char **argv) {
+noreturn static inline void do_maccheck(int argc, char **argv) {
   if (argc < 2) {
     WRITE_LITERAL(STDERR_FILENO, "Using: maccheck OUI/MAC...\n");
     exit(1);

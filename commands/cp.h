@@ -40,7 +40,7 @@ static inline void copy_file(int fd1, int fd2) {
   }
 }
 
-[[noreturn]] static inline void do_cp(int argc, char **argv) {
+noreturn static inline void do_cp(int argc, char **argv) {
   if (argc < 3) {
     WRITE_LITERAL(STDERR_FILENO, "Using: cp SOURCE DESTINATION\n"
                                  "   or: cp SOURCE... DIRECTORY\n");

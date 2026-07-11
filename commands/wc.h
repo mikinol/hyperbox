@@ -36,7 +36,7 @@ static inline long count_newlines_in_fd(int fd) {
   return newlines;
 }
 
-[[noreturn]] static inline void do_wc(int argc, char **argv) {
+noreturn static inline void do_wc(int argc, char **argv) {
   if (argc == 1) {
     long readed = count_bytes_in_any_fd(STDIN_FILENO);
     char *str = itoa(readed);

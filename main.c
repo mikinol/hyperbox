@@ -13,14 +13,14 @@
 #include "./commands/vis.h"
 #include "./commands/wc.h"
 
-[[noreturn]] int main(int argc, char **argv) {
+noreturn void main(int argc, char **argv) {
   if (unlikely(argc < 1))
     goto incorrect;
 
   const char *cmd = get_basename(argv[0]);
   unsigned long len = strlen(cmd);
 
-  typedef void (*worker_fn)(int, char **);
+  typedef void noreturn (*worker_fn)(int, char **);
   worker_fn func = NULL;
 
   if (len <= 8) {
@@ -60,6 +60,7 @@
 
   if (likely(func))
     func(argc, argv);
+
 incorrect:
   WRITE_LITERAL(STDERR_FILENO, "Incorrect cmd");
   exit(1);

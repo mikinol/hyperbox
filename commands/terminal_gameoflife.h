@@ -118,7 +118,7 @@ static void my_sigrestorer(void) { syscall(SYS_rt_sigreturn); }
 
 uintptr_t page_align_up(uintptr_t addr) { return (addr + 4095) & ~4095; }
 
-[[noreturn]] static inline void do_terminal_gameoflife(int argc, char **argv) {
+noreturn static inline void do_terminal_gameoflife(int argc, char **argv) {
   if (unlikely(ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)) {
     print(&STDERR_IO, "Cannot get terminal size: ", _errno, _endl);
     exit(1);

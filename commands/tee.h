@@ -1,6 +1,6 @@
 #include "../mikinolibc/lib.h"
 
-[[noreturn]] static inline void do_tee(int argc, char **argv) {
+noreturn static inline void do_tee(int argc, char **argv) {
   int fds[argc];
   fds[0] = STDOUT_FILENO;
   for (int i = 1; i < argc; i++) {
