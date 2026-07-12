@@ -269,13 +269,11 @@ static inline void run_do_password_gen(int argc, char **argv) {
   }
 
   if (argv[0][0] == 'u' && argv[0][1] == 'u' && argv[0][2] == 'i' && argv[0][3] == 'd' && argv[0][4] == '\0') {
-    generate_uuids(argc, argv);
-    return;
+    tail_call generate_uuids(argc, argv);
   }
 
   if (argv[0][0] == 'p' && argv[0][1] == 'r' && argv[0][2] == 'e' && argv[0][3] == '\0') {
-    prerandom(argc, argv);
-    return;
+    tail_call prerandom(argc, argv);
   }
 
   uint64_t length, count;
