@@ -40,16 +40,16 @@ void print_grid(char *grid, unsigned short cols, unsigned short rows) {
   for (unsigned short i = 0; i < rows; i++) {
     for (unsigned short j = 0; j < cols; j++) {
       if (CELL(grid, i, j, cols)) {
-        print(&STDOUT_IO, "#");
+        print_char(&STDOUT_IO, '#');
       } else {
-        print(&STDOUT_IO, " ");
+        print_char(&STDOUT_IO, ' ');
       }
     }
 
     if (i + 1 < rows)
-      print(&STDOUT_IO, "\n");
+      print_char(&STDOUT_IO, '\n');
   }
-  print(&STDOUT_IO, _flush);
+  print_flush(&STDOUT_IO);
 }
 
 static inline void resize_grid(char *oldgrid, char *grid, const unsigned short cols, const unsigned short rows,

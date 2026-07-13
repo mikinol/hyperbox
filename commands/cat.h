@@ -1,15 +1,8 @@
 #include "../mikinolibc/lib.h"
 
-static inline void read_file_with_read_write(int fd, char *filename) {
-  long ret = print_fd_to_end(&STDOUT_IO, fd);
-  if (unlikely(ret < 0)) {
-    print(&STDERR_IO, "Cannot read file ", filename, ": ", _errno, _endl);
-    exit(1);
-  }
-}
-
 static inline void read_files_to_stdout(int argc, char **argv) {
-  for (int i = 1;; i++) {
+  int i = 1;
+  while (true) {
     int fd = open(argv[i], O_RDONLY);
     if (unlikely(fd < 0)) {
       print(&STDERR_IO, "Cannot open file ", argv[i], ": ", _errno, _endl);
@@ -17,8 +10,7 @@ static inline void read_files_to_stdout(int argc, char **argv) {
     }
 
     if (strncmp(argv[i], "/proc/", 6) == 0 || strncmp(argv[i], "/sys/", 5) == 0 || strncmp(argv[i], "/dev/", 5) == 0) {
-      read_file_with_read_write(fd, argv[i]);
-      goto finish;
+      goto read_with_read_write;
     }
 
     print_flush(&STDOUT_IO);
@@ -33,11 +25,15 @@ static inline void read_files_to_stdout(int argc, char **argv) {
         exit(1);
       }
 
-      read_file_with_read_write(fd, argv[i]);
+    read_with_read_write:
+      long ret = print_fd_to_end(&STDOUT_IO, fd);
+      if (unlikely(ret < 0)) {
+        print(&STDERR_IO, "Cannot read file ", argv[i], ": ", _errno, _endl);
+        exit(1);
+      }
     }
 
-  finish:
-    if (i == argc - 1)
+    if (++i >= argc)
       return;
 
     close(fd);
