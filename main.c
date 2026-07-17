@@ -23,6 +23,11 @@ noreturn void main(int argc, char **argv) {
   typedef void noreturn (*worker_fn)(int, char **);
   worker_fn func = NULL;
 
+  if (argc > 1 && argv[1][0] == '-' && argv[1][1] == '-' && argv[1][2] == 'v' && argv[1][3] == 'e' && argv[1][4] == 'r' &&
+      argv[1][5] == 's' && argv[1][6] == 'i' && argv[1][7] == 'o' && argv[1][8] == 'n') {
+    exit(0);
+  }
+
   if (len <= 8) {
     uint64_t cmd_v = 0;
     memcpy(&cmd_v, cmd, len);

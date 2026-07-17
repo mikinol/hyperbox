@@ -54,6 +54,5 @@ noreturn static inline void do_mkdir(int argc, char **argv) {
       }
     }
   }
-
   exit(0);
 }
