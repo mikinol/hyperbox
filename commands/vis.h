@@ -31,6 +31,8 @@ noreturn static inline void do_vis(int argc, char **argv) {
         hex[3] = val_to_hex_lower(c & 0x0F);
         print_array(&STDOUT_IO, hex, sizeof(hex));
       }
+
+      print_flush(&STDOUT_IO);
     }
 
     print_array(&STDOUT_IO, STDIN_IO.buf + last_normal, ret - last_normal);

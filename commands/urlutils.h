@@ -25,9 +25,9 @@ noreturn static inline void do_urlencode(int argc, char **argv) {
     if (last_normal < STDIN_IO.buf + ret) {
       print_array(&STDOUT_IO, last_normal, (STDIN_IO.buf + ret) - last_normal);
     }
-  }
 
-  print_flush(&STDOUT_IO);
+    print_flush(&STDOUT_IO);
+  }
 
   if (unlikely(ret < 0)) {
     print(&STDERR_IO, "Cannot read stdin: ", _errno, _endl);
@@ -78,9 +78,9 @@ noreturn static inline void do_urldecode(int argc, char **argv) {
     if (last_normal < end) {
       print_array(&STDOUT_IO, last_normal, end - last_normal);
     }
-  }
 
-  print_flush(&STDOUT_IO);
+    print_flush(&STDOUT_IO);
+  }
 
   if (unlikely(ret < 0)) {
     print(&STDERR_IO, "Cannot read stdin: ", _errno, _endl);
